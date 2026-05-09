@@ -1,0 +1,36 @@
+version: "3.9"
+
+services:
+  nginx:
+    image: nginx:alpine
+    container_name: devops-sandbox-nginx
+    ports:
+      - "8080:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/conf.d:/etc/nginx/conf.d
+      - ./logs/nginx:/var/log/nginx
+    networks:
+      - sandbox-platform
+    restart: unless-stopped
+
+  api:
+    image: python:3.11-slim
+    container_name: devops-sandbox-api
+    working_dir: /app
+    command: sh -c "pip install flask && python platform/api.py"
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./:/app
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - sandbox-platform
+    restart: unless-stopped
+    depends_on:
+      - nginx
+
+networks:
+  sandbox-platform:
+    name: sandbox-platform
+    driver: bridge
